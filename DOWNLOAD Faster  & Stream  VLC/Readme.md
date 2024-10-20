@@ -28,10 +28,13 @@ This Python script allows you to download torrents using magnet links and stream
 To play the streamed content:
 - Use VLC player and open the network stream: `udp://@127.0.0.1:1234`
 
-Alternatively:
-- Use IDM extension to download directly
-- Copy the full HTTPS link from your download history
+Alternatively (recommended method):
+- Click the "download" button
+- Use an IDM (Internet Download Manager) extension or download directly
+- In your download history, copy the full HTTPS link
 - Paste the link into VLC's network streaming option
+
+This alternative method provides a more direct way to play the content and should work well.
 
 ## Note
 
@@ -40,9 +43,6 @@ This script is for educational purposes only. Ensure you have the right to downl
 ## Disclaimer
 
 Be aware of the legal implications of downloading and sharing copyrighted material in your jurisdiction.
-
-
-
 ## CODE
 
 ```
