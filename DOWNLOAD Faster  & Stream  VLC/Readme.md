@@ -1,3 +1,51 @@
+# Torrent Downloader and Streamer
+
+This Python script allows you to download torrents using magnet links and stream the downloaded content using FFmpeg.
+
+## Prerequisites
+
+- Python 3
+- libtorrent
+- FFmpeg
+- tqdm
+
+## Installation
+
+1. Install the necessary libraries:
+   ```
+   apt-get install -y python3-libtorrent ffmpeg
+   pip install tqdm
+   ```
+
+## Usage
+
+1. Run the script and enter the magnet link when prompted.
+2. The script will download the torrent and display progress information.
+3. Once the download is complete, it will attempt to stream the content using FFmpeg.
+
+## Streaming
+
+To play the streamed content:
+- Use VLC player and open the network stream: `udp://@127.0.0.1:1234`
+
+Alternatively:
+- Use IDM extension to download directly
+- Copy the full HTTPS link from your download history
+- Paste the link into VLC's network streaming option
+
+## Note
+
+This script is for educational purposes only. Ensure you have the right to download and stream the content.
+
+## Disclaimer
+
+Be aware of the legal implications of downloading and sharing copyrighted material in your jurisdiction.
+
+
+
+## CODE
+
+```
 # Install necessary libraries
 !apt-get install -y python3-libtorrent ffmpeg
 !pip install tqdm
@@ -90,4 +138,7 @@ os.system(f'ffmpeg -i "{downloaded_file}" -f mpegts udp://127.0.0.1:1234')
 # To play it locally, use the following command in your VLC player:
 # "udp://@127.0.0.1:1234"
 
-# the better way to play directly is to  click down "download"   i recommend use IDM  extension , or just download direct and in your downloading History , copy the full https link,, and paste it in VLC , netwoking streaming , it will work
+# the better way to play directly is to  click down "download"   i recommend use IDM  extension , or just download direct and in your downloading History , copy the full https link,, and paste it in VLC , netwoking streaming , it will work 
+
+
+```
