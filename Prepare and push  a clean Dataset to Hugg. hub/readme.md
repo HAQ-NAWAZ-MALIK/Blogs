@@ -244,6 +244,223 @@ if __name__ == "__main__":
     ) 
 ```
 
+
+## If you have .wav files and .txt files in 2 seprated folders you can use it as 
+
+
+Below is the **complete code** that processes `.wav` files and their corresponding transcriptions into a Hugging Face-compatible dataset, including all features (`duration`, `sample_rate`, metadata, train/test splits) and fixes the issue with non-numeric filenames. 
+
+---
+
+### Complete Code:
+
+```python
+import os
+import json
+import pandas as pd
+import soundfile as sf
+from sklearn.model_selection import train_test_split
+from datasets import Dataset, DatasetDict, Audio
+
+# Paths
+wav_folder = '/content/wavs'
+text_folder = '/content/metadata_text_files'
+output_dir = '/content/hf_dataset'
+metadata_file = '/content/metadata.json'
+
+# Dataset Information
+dataset_name = "Persian_TTS"
+language = "Persian"
+
+# Step 1: Create a Clean Dataset
+def create_clean_dataset(wav_folder, text_folder):
+    data = []
+    total_duration = 0
+    
+    # Filter and sort valid .wav files
+    wav_files = [
+        wav_file for wav_file in os.listdir(wav_folder)
+        if wav_file.endswith('.wav') and wav_file.split('.')[0].isdigit()
+    ]
+    wav_files = sorted(wav_files, key=lambda x: int(x.split('.')[0]))  # Sort by numeric value
+
+    for wav_file in wav_files:
+        # Extract WAV file path
+        wav_path = os.path.join(wav_folder, wav_file)
+        base_name = wav_file.split('.')[0]
+        
+        # Extract corresponding text file path
+        text_file = os.path.join(text_folder, f"wav_{base_name}.txt")
+        
+        if not os.path.exists(text_file):
+            print(f"Skipping {wav_path}: No transcription found.")
+            continue
+        
+        # Read transcription
+        with open(text_file, 'r', encoding='utf-8') as f:
+            text = f.read().strip()
+        
+        # Verify audio file and get its properties
+        try:
+            audio_info = sf.info(wav_path)
+            duration = audio_info.duration
+            sample_rate = audio_info.samplerate
+            total_duration += duration
+        except Exception as e:
+            print(f"Error processing {wav_path}: {str(e)}")
+            continue
+        
+        # Append file information to the data list
+        data.append({
+            'file_name': wav_file,
+            'text': text,
+            'audio': wav_path,
+            'duration': duration,
+            'sample_rate': sample_rate
+        })
+    
+    # Create a DataFrame from the collected data
+    df = pd.DataFrame(data)
+    print(f"Total files processed: {len(df)}")
+    print(f"Total audio duration: {total_duration:.2f} seconds")
+    return df
+
+# Step 2: Split Dataset
+def split_dataset(df, test_size=0.2, random_state=42):
+    train_df, test_df = train_test_split(df, test_size=test_size, random_state=random_state)
+    return train_df, test_df
+
+# Step 3: Create Metadata
+def create_metadata(df, output_file, dataset_name, language):
+    metadata = {
+        'dataset_name': dataset_name,
+        'language': language,
+        'num_samples': len(df),
+        'total_audio_duration': f"{df['duration'].sum():.2f} seconds",
+        'file_format': 'WAV',
+        'text_format': 'TXT',
+        'license': 'CC-BY-4.0',  # Adjust as needed
+        'citations': [],  # Add any relevant citations
+        'description': f'A {language} text-to-speech dataset containing paired text and audio files.'
+    }
+    
+    # Write metadata to a JSON file
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(metadata, f, indent=2)
+    print(f"Metadata saved to {output_file}")
+
+# Step 4: Create Hugging Face Dataset
+def create_hf_dataset(train_df, test_df, output_dir):
+    def process_example(example):
+        # Process each example in the dataset
+        return {
+            'audio': example['audio'],
+            'text': example['text'],
+            'duration': example['duration'],
+            'sample_rate': example['sample_rate']
+        }
+
+    # Create datasets from DataFrames
+    train_dataset = Dataset.from_pandas(train_df)
+    test_dataset = Dataset.from_pandas(test_df)
+    
+    # Apply processing to each example
+    train_dataset = train_dataset.map(process_example)
+    test_dataset = test_dataset.map(process_example)
+    
+    # Set the audio column format
+    train_dataset = train_dataset.cast_column("audio", Audio(sampling_rate=16000))
+    test_dataset = test_dataset.cast_column("audio", Audio(sampling_rate=16000))
+    
+    # Create a DatasetDict with train and test splits
+    dataset_dict = DatasetDict({
+        'train': train_dataset,
+        'test': test_dataset
+    })
+    
+    # Save the dataset to disk
+    dataset_dict.save_to_disk(output_dir)
+    print(f"Saved dataset to {output_dir}")
+
+# Main Function
+def main():
+    # Create a clean dataset
+    df = create_clean_dataset(wav_folder, text_folder)
+    
+    # Split the dataset into train and test sets
+    train_df, test_df = split_dataset(df)
+    
+    # Create metadata for the dataset
+    create_metadata(df, metadata_file, dataset_name, language)
+    
+    # Create and save the Hugging Face dataset
+    create_hf_dataset(train_df, test_df, output_dir)
+    print("Processing complete!")
+
+# Run the script
+main()
+```
+
+---
+
+### Key Features:
+1. **Handles Non-Numeric Filenames:**
+   - Filters files to process only `.wav` files with numeric names.
+
+2. **Includes Audio Features:**
+   - Extracts `duration` and `sample_rate` for each `.wav` file.
+
+3. **Creates Metadata:**
+   - Saves metadata like the total number of samples, total audio duration, dataset name, and language in a JSON file.
+
+4. **Train/Test Splits:**
+   - Splits data into `train` and `test` sets with an 80/20 ratio.
+
+5. **Hugging Face Dataset:**
+   - Creates a Hugging Face `DatasetDict` and saves it to disk for reuse.
+
+---
+
+### Output:
+1. **Hugging Face Dataset:**
+   - Saved to `/content/hf_dataset`.
+
+2. **Metadata JSON:**
+   - Saved to `/content/metadata.json`.
+
+3. **Console Logs:**
+   - Number of files processed.
+   - Total audio duration.
+
+------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Your clean dataset is being created now push to hub 
 
 
